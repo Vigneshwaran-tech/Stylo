@@ -1,13 +1,6 @@
-import { useState } from 'react'
-
-interface Shop {
-  id: string
-  name: string
-  address: string
-  rating: number
-  distance: string
-  image?: string
-}
+import { useState, useEffect } from 'react'
+import { getShops } from '../services/firestoreService'
+import type { Shop } from '../services/firestoreService'
 
 interface ShopSelectionProps {
   onShopSelect?: (shopId: string) => void
@@ -15,42 +8,27 @@ interface ShopSelectionProps {
 
 function ShopSelection({ onShopSelect }: ShopSelectionProps) {
   const [selectedShop, setSelectedShop] = useState<string | null>(null)
+  const [shops, setShops] = useState<Shop[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Mock data - replace with API call
-  const shops: Shop[] = [
-    {
-      id: '1',
-      name: 'Style Master Barber',
-      address: '123 Main Street, Downtown',
-      rating: 4.8,
-      distance: '0.5 km',
-      image: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=400&h=300&fit=crop'
-    },
-    {
-      id: '2',
-      name: 'Classic Cuts Studio',
-      address: '456 Oak Avenue, City Center',
-      rating: 4.6,
-      distance: '1.2 km',
-      image: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&h=300&fit=crop'
-    },
-    {
-      id: '3',
-      name: 'Elite Grooming Lounge',
-      address: '789 Pine Road, Westside',
-      rating: 4.9,
-      distance: '2.1 km',
-      image: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=400&h=300&fit=crop'
-    },
-    {
-      id: '4',
-      name: 'Premium Barber Shop',
-      address: '321 Elm Street, Eastside',
-      rating: 4.7,
-      distance: '1.8 km',
-      image: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=400&h=300&fit=crop'
+  useEffect(() => {
+    const fetchShops = async () => {
+      try {
+        setLoading(true)
+        const fetchedShops = await getShops()
+        setShops(fetchedShops)
+        setError(null)
+      } catch (err: any) {
+        console.error('Error fetching shops:', err)
+        setError('Failed to load shops. Please try again.')
+      } finally {
+        setLoading(false)
+      }
     }
-  ]
+
+    fetchShops()
+  }, [])
 
   const handleShopClick = (shopId: string) => {
     setSelectedShop(shopId)
@@ -69,6 +47,24 @@ function ShopSelection({ onShopSelect }: ShopSelectionProps) {
           <h1 className="selection-title">Select a Barber Shop</h1>
           <p className="selection-subtitle">Choose your preferred location</p>
         </div>
+
+        {loading && (
+          <div style={{ textAlign: 'center', padding: '40px', color: '#a5acba' }}>
+            Loading shops...
+          </div>
+        )}
+
+        {error && (
+          <div style={{ textAlign: 'center', padding: '40px', color: '#ef4444' }}>
+            {error}
+          </div>
+        )}
+
+        {!loading && !error && shops.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '40px', color: '#a5acba' }}>
+            No shops available. Click "Seed Test Data" button to create sample shops.
+          </div>
+        )}
 
         <div className="shops-grid">
           {shops.map((shop) => (

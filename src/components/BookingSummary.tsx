@@ -1,4 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useAuth } from '../contexts/AuthContext'
+import { getShopById, getServices, safeBookSlot } from '../services/firestoreService'
+import { initiatePayment } from '../services/paymentService'
+import type { Shop, Service } from '../services/firestoreService'
 
 interface BookingSummaryProps {
   shopId: string
@@ -24,40 +28,75 @@ interface Shop {
 }
 
 function BookingSummary({ shopId, serviceIds, date, timeSlot, onConfirm, onCancel }: BookingSummaryProps) {
+  const { user } = useAuth()
   const [isProcessing, setIsProcessing] = useState(false)
+  const [shop, setShop] = useState<Shop | null>(null)
+  const [services, setServices] = useState<Service[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Mock data - should match the data from other components
-  const shops: Shop[] = [
-    { id: '1', name: 'Classic Cuts Barber Shop', address: '123 Main Street, Downtown', phone: '+1 234 567 8900' },
-    { id: '2', name: 'Modern Trim Studio', address: '456 Oak Avenue, Midtown', phone: '+1 234 567 8901' },
-    { id: '3', name: 'Gentleman\'s Grooming', address: '789 Pine Road, Uptown', phone: '+1 234 567 8902' },
-    { id: '4', name: 'Style Masters Salon', address: '321 Elm Street, West End', phone: '+1 234 567 8903' },
-  ]
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const [fetchedShop, fetchedServices] = await Promise.all([
+          getShopById(shopId),
+          getServices(shopId),
+        ])
+        setShop(fetchedShop)
+        const selectedServices = fetchedServices.filter(s => serviceIds.includes(s.id))
+        setServices(selectedServices)
+      } catch (err) {
+        console.error('Error fetching data:', err)
+        setError('Failed to load booking details')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [shopId, serviceIds])
 
-  const allServices: Service[] = [
-    { id: '1', name: 'Haircut', price: 450, duration: '30 min' },
-    { id: '2', name: 'Beard Trim', price: 200, duration: '15 min' },
-    { id: '3', name: 'Haircut + Beard', price: 600, duration: '45 min' },
-    { id: '4', name: 'Hair Coloring', price: 800, duration: '60 min' },
-    { id: '5', name: 'Facial', price: 500, duration: '45 min' },
-    { id: '6', name: 'Head Massage', price: 300, duration: '20 min' },
-  ]
+  const totalPrice = services.reduce((sum, service) => sum + service.price, 0)
+  const totalDuration = services.reduce((sum, service) => sum + service.duration, 0)
 
-  const selectedShop = shops.find(s => s.id === shopId)
-  const selectedServices = allServices.filter(s => serviceIds.includes(s.id))
-  const totalPrice = selectedServices.reduce((sum, service) => sum + service.price, 0)
-  const totalDuration = selectedServices.reduce((sum, service) => {
-    const mins = parseInt(service.duration)
-    return sum + mins
-  }, 0)
-
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
+    if (!user || !shop) return
+    
     setIsProcessing(true)
-    // Simulate payment processing
-    setTimeout(() => {
+    setError(null)
+
+    try {
+      // Initiate payment
+      const paymentResult = await initiatePayment({
+        amount: totalPrice,
+        name: shop.name,
+        description: `Booking at ${shop.name}`,
+        prefill: {
+          name: user.displayName || '',
+          email: user.email || '',
+        },
+      })
+
+      if (!paymentResult.success) {
+        setError(paymentResult.error || 'Payment failed')
+        setIsProcessing(false)
+        return
+      }
+
+      // Payment successful - create booking in Firestore
+      const dateStr = date.toISOString().split('T')[0]
+      await safeBookSlot(user.uid, shopId, dateStr, timeSlot, serviceIds)
+
+      console.log('Payment ID:', paymentResult.paymentId)
+      console.log('Booking confirmed!')
+      
       setIsProcessing(false)
       onConfirm?.()
-    }, 1500)
+    } catch (err: any) {
+      console.error('Booking error:', err)
+      setError(err.message || 'Booking failed. Please try again.')
+      setIsProcessing(false)
+    }
   }
 
   const formatDate = (date: Date) => {
@@ -70,6 +109,26 @@ function BookingSummary({ shopId, serviceIds, date, timeSlot, onConfirm, onCance
     return date.toLocaleDateString('en-US', options)
   }
 
+  if (loading) {
+    return (
+      <div className="page">
+        <div style={{ textAlign: 'center', padding: '40px', color: '#a5acba' }}>
+          Loading booking details...
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !shop) {
+    return (
+      <div className="page">
+        <div style={{ textAlign: 'center', padding: '40px', color: '#ef4444' }}>
+          {error || 'Shop not found'}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="page">
       <main className="summary-container">
@@ -77,6 +136,12 @@ function BookingSummary({ shopId, serviceIds, date, timeSlot, onConfirm, onCance
           <h1 className="summary-title">Booking Summary</h1>
           <p className="summary-subtitle">Review your booking details</p>
         </div>
+
+        {error && (
+          <div style={{ padding: '15px', marginBottom: '20px', backgroundColor: '#ef4444', color: 'white', borderRadius: '8px' }}>
+            {error}
+          </div>
+        )}
 
         <div className="summary-card">
           <div className="summary-section">
@@ -88,9 +153,8 @@ function BookingSummary({ shopId, serviceIds, date, timeSlot, onConfirm, onCance
               <h2 className="section-title">Shop Details</h2>
             </div>
             <div className="section-content">
-              <p className="shop-name">{selectedShop?.name}</p>
-              <p className="shop-info">{selectedShop?.address}</p>
-              <p className="shop-info">{selectedShop?.phone}</p>
+              <p className="shop-name">{shop?.name}</p>
+              <p className="shop-info">{shop?.address}</p>
             </div>
           </div>
 
@@ -123,11 +187,11 @@ function BookingSummary({ shopId, serviceIds, date, timeSlot, onConfirm, onCance
               <h2 className="section-title">Services</h2>
             </div>
             <div className="section-content">
-              {selectedServices.map(service => (
+              {services.map(service => (
                 <div key={service.id} className="service-item">
                   <div className="service-details">
                     <p className="service-name">{service.name}</p>
-                    <p className="service-duration">{service.duration}</p>
+                    <p className="service-duration">{service.duration} min</p>
                   </div>
                   <p className="service-price">₹{service.price}</p>
                 </div>

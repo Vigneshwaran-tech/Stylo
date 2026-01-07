@@ -6,10 +6,13 @@ import ShopSelection from './components/ShopSelection'
 import ServiceSelection from './components/ServiceSelection'
 import DateSelection from './components/DateSelection'
 import BookingSummary from './components/BookingSummary'
+import { AdminPanel } from './components/AdminPanel'
+import { AdminDashboard } from './components/AdminDashboard'
 
 function App() {
   const [isLogin, setIsLogin] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isAdminView, setIsAdminView] = useState(false)
   const [selectedShop, setSelectedShop] = useState<string | null>(null)
   const [selectedService, setSelectedService] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
@@ -114,12 +117,38 @@ function App() {
     )
   }
 
+  if (isAuthenticated && isAdminView) {
+    return <AdminDashboard />
+  }
+
   if (isAuthenticated) {
-    return <ShopSelection onShopSelect={handleShopSelect} />
+    return (
+      <>
+        <AdminPanel />
+        <div style={{ position: 'fixed', top: '20px', left: '20px', zIndex: 1000 }}>
+          <button
+            onClick={() => setIsAdminView(true)}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#f8b646',
+              color: '#000',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+            }}
+          >
+            Admin Dashboard
+          </button>
+        </div>
+        <ShopSelection onShopSelect={handleShopSelect} />
+      </>
+    )
   }
 
   return (
     <>
+      <AdminPanel />
       {isLogin ? (
         <Login 
           onSwitchToSignup={() => setIsLogin(false)} 

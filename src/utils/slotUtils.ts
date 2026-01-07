@@ -28,7 +28,7 @@ export const generateTimeSlots = (config: SlotConfig): string[] => {
 
   while (currentTime + duration <= closeMinutes) {
     const slotStart = formatTime(currentTime);
-    const slotEnd = formatTime(currentTime + duration);
+
 
     // Check if slot conflicts with breaks
     let isInBreak = false;
@@ -59,7 +59,7 @@ export const generateDateSlots = (
   config: SlotConfig
 ): Array<{ id: string; time: string; date: string; available: boolean }> => {
   const timeSlots = generateTimeSlots(config);
-  return timeSlots.map((time, index) => ({
+  return timeSlots.map((time) => ({
     id: `${date}-${time}`,
     time,
     date,

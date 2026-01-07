@@ -13,20 +13,6 @@ interface BookingSummaryProps {
   onCancel?: () => void
 }
 
-interface Service {
-  id: string
-  name: string
-  price: number
-  duration: string
-}
-
-interface Shop {
-  id: string
-  name: string
-  address: string
-  phone: string
-}
-
 function BookingSummary({ shopId, serviceIds, date, timeSlot, onConfirm, onCancel }: BookingSummaryProps) {
   const { user } = useAuth()
   const [isProcessing, setIsProcessing] = useState(false)
@@ -57,7 +43,7 @@ function BookingSummary({ shopId, serviceIds, date, timeSlot, onConfirm, onCance
   }, [shopId, serviceIds])
 
   const totalPrice = services.reduce((sum, service) => sum + service.price, 0)
-  const totalDuration = services.reduce((sum, service) => sum + service.duration, 0)
+  const totalDuration = services.reduce((sum, service) => sum + (typeof service.duration === 'string' ? parseInt(service.duration) : service.duration), 0)
 
   const handleConfirm = async () => {
     if (!user || !shop) return

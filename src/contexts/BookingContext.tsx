@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import type { Shop, Service, Slot, Booking } from '../services/firestoreService';
+import type { Shop, Service, Slot } from '../services/firestoreService';
 
 interface BookingContextType {
   selectedShop: Shop | null;

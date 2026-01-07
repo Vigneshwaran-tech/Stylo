@@ -41,11 +41,11 @@ function App() {
     setSelectedShop(null)
   }
 
-  const handleBackToServices = () => {
-    setSelectedService(null)
-    setSelectedDate(null)
-    setSelectedTimeSlot(null)
-  }
+  // const handleBackToServices = () => {
+  //   setSelectedService(null)
+  //   setSelectedDate(null)
+  //   setSelectedTimeSlot(null)
+  // }
 
   const handleBackToDate = () => {
     setSelectedDate(null)

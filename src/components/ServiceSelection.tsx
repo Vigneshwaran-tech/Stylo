@@ -15,7 +15,7 @@ interface ServiceSelectionProps {
   onBack?: () => void
 }
 
-function ServiceSelection({ shopId, onServiceSelect, onBack }: ServiceSelectionProps) {
+function ServiceSelection({ onServiceSelect, onBack }: ServiceSelectionProps) {
   const [selectedServices, setSelectedServices] = useState<string[]>([])
 
   // Mock data - replace with API call based on shopId

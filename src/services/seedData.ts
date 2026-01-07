@@ -1,5 +1,5 @@
 import { db } from '../firebase';
-import { collection, doc, setDoc, addDoc } from 'firebase/firestore';
+import { collection, doc, setDoc } from 'firebase/firestore';
 
 // Seed test data
 export const seedTestData = async () => {

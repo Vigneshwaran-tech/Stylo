@@ -13,7 +13,7 @@ interface TimeSlot {
   available: boolean
 }
 
-function DateSelection({ shopId, serviceIds, onDateSelect, onBack }: DateSelectionProps) {
+function DateSelection({ onDateSelect, onBack }: DateSelectionProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null)

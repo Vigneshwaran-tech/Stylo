@@ -21,7 +21,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ title = 'Admin', child
             <p className="admin-label">Admin</p>
             <h1 className="admin-title">{title}</h1>
           </div>
-          <a className="admin-link" href="/">Back to customer</a>
+          <a className="admin-link" href="/">Go to Website</a>
         </header>
         <section className="admin-content">{children}</section>
       </main>

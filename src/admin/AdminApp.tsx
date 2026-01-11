@@ -7,16 +7,22 @@ import AdminDashboardPage from './pages/Dashboard'
 const getAdminRoute = (path: string) => {
   if (!path.startsWith('/admin')) return 'dashboard'
   const [, , rest] = path.split('/')
-  return rest || 'dashboard'
+  return rest || 'login'
 }
 
 export const AdminApp: React.FC = () => {
   const { user } = useAuth()
-  const path = typeof window !== 'undefined' ? window.location.pathname : '/admin'
+  const path = typeof window !== 'undefined' ? window.location.pathname : '/admin/login'
   const route = getAdminRoute(path)
 
-  // TODO: replace with real admin claim/role guard
+  // Show admin login if on /admin/login route (always accessible)
+  if (route === 'login') {
+    return <AdminLogin />
+  }
+
+  // Require auth for other admin routes
   if (!user) {
+    window.location.href = '/admin/login'
     return <AdminLogin />
   }
 

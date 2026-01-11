@@ -8,6 +8,7 @@ import DateSelection from './components/DateSelection'
 import BookingSummary from './components/BookingSummary'
 import { AdminPanel } from './components/AdminPanel'
 import { AdminDashboard } from './components/AdminDashboard'
+import AdminApp from './admin/AdminApp'
 
 function App() {
   const [isLogin, setIsLogin] = useState(true)
@@ -18,6 +19,12 @@ function App() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null)
   const [isBookingConfirmed, setIsBookingConfirmed] = useState(false)
+
+  const isAdminRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')
+
+  if (isAdminRoute) {
+    return <AdminApp />
+  }
 
   const handleAuthSuccess = () => {
     setIsAuthenticated(true)
